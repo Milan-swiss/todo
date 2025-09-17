@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity Hub - Smart Task Management</title>
+    <style>
+        :root[data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        :root[data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-primary: #60a5fa;
+            --accent-secondary: #34d399;
+            --accent-danger: #f87171;
+            --accent-warning: #fbbf24;
+            --border-color: #475569;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Clean animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 75% 25%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 25% 75%, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            animation: gradientMove 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-20px, -20px) rotate(1deg); }
+            50% { transform: translate(20px, -10px) rotate(-1deg); }
+            75% { transform: translate(-10px, 20px) rotate(0.5deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 8px;
+            display: flex;
+            gap: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .theme-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .theme-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        /* Authentication */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .auth-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            max-width: 400px;
+            width: 90%;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .auth-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .auth-btn, .btn {
+            width: 100%;
+            padding: 12px 24px;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .auth-btn:hover, .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        /* Main App */
+        .user-info {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .user-details {
+            color: var(--text-primary);
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: var(--accent-danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 32px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Todo Input */
+        .todo-input-container {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .todo-main-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .todo-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .todo-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .btn {
+            width: auto;
+            padding: 12px 24px;
+            white-space: nowrap;
+        }
+
+        .btn.success {
+            background: var(--accent-secondary);
+        }
+
+        .todo-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .deadline-input, .priority-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* Todo List */
+        .todo-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .todo-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .todo-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow);
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+        }
+
+        .todo-item.overdue {
+            border-left: 4px solid var(--accent-danger);
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.05), var(--bg-tertiary));
+        }
+
+        .todo-item.due-soon {
+            border-left: 4px solid var(--accent-warning);
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.05), var(--bg-tertiary));
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid var(--accent-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checkbox:hover {
+            transform: scale(1.1);
+        }
+
+        .checkbox.checked {
+            background: var(--accent-primary);
+        }
+
+        .checkbox.checked::after {
+            content: 'v';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .todo-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .todo-text {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .todo-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .priority-badge, .deadline-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .priority-high { background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); }
+        .priority-medium { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+        .priority-low { background: rgba(16, 185, 129, 0.1); color: var(--accent-secondary); }
+
+        .deadline-overdue { background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); }
+        .deadline-soon { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+        .deadline-normal { background: rgba(59, 130, 246, 0.1); color: var(--accent-primary); }
+
+        .todo-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .todo-item:hover .todo-actions {
+            opacity: 1;
+        }
+
+        .delete-btn {
+            background: var(--accent-danger);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Notes */
+        .notes-input {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .notes-input input, .notes-input textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 16px;
+            margin-bottom: 16px;
+            font-family: inherit;
+        }
+
+        .notes-input textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .notes-input input:focus, .notes-input textarea:focus {
+            outline: none;
+            border-color: var(--accent-secondary);
+        }
+
+        .notes-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .note-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .note-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .note-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .note-content {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .note-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .delete-note {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-danger);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .note-item:hover .delete-note {
+            opacity: 1;
+        }
+
+        .delete-note:hover {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-secondary);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .todo-main-input {
+                flex-direction: column;
+            }
+            
+            .todo-options {
+                flex-direction: column;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .notes-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="theme-toggle">
+        <button class="theme-btn active" onclick="setTheme('light')">Light</button>
+        <button class="theme-btn" onclick="setTheme('dark')">Dark</button>
+    </div>
+
+    <!-- Authentication Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <div id="loginForm">
+                <h2 class="auth-title">Welcome Back</h2>
+                <div id="authMessage"></div>
+                <form onsubmit="handleLogin(event)">
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Username or Email" required>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Password" required>
+                    <button type="submit" class="auth-btn" id="loginBtn">Login</button>
+                </form>
+                <div class="auth-switch">
+                    No account yet? <a href="#" onclick="showRegister()">Sign Up</a>
+                </div>
+            </div>
+
+            <div id="registerForm" class="hidden">
+                <h2 class="auth-title">Create Account</h2>
+                <div id="registerMessage"></div>
+                <form onsubmit="handleRegister(event)">
+                    <input type="text" id="registerUsername" class="form-input" placeholder="Username" required>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="Email" required>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Password (min. 6 characters)" minlength="6" required>
+                    <button type="submit" class="auth-btn" id="registerBtn">Sign Up</button>
+                </form>
+                <div class="auth-switch">
+                    Already have an account? <a href="#" onclick="showLogin()">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Application -->
+    <div class="container" id="mainApp" style="display: none;">
+        <div class="user-info">
+            <div class="user-details">
+                <div class="user-name" id="userName"></div>
+                <div class="user-email" id="userEmail"></div>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+
+        <header>
+            <h1>Productivity Hub</h1>
+            <p class="subtitle">Smart Task Management & Note Organization</p>
+        </header>
+
+        <div class="app-grid">
+            <!-- Todo Section -->
+            <div class="card">
+                <h2 class="card-title">Tasks</h2>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTodos">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedTodos">0</div>
+                        <div class="stat-label">Done</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="overdueTodos">0</div>
+                        <div class="stat-label">Overdue</div>
+                    </div>
+                </div>
+
+                <div class="todo-input-container">
+                    <div class="todo-main-input">
+                        <input type="text" id="todoInput" class="todo-input" placeholder="Add new task...">
+                        <button class="btn" onclick="addTodo()">Add Task</button>
+                    </div>
+                    <div class="todo-options">
+                        <input type="datetime-local" id="deadlineInput" class="deadline-input" title="Set deadline">
+                        <select id="priorityInput" class="priority-select">
+                            <option value="low">Low Priority</option>
+                            <option value="medium" selected>Medium Priority</option>
+                            <option value="high">High Priority</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <ul class="todo-list" id="todoList"></ul>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="card">
+                <h2 class="card-title">Notes</h2>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalNotes">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="todayNotes">0</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="recentNotes">0</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                </div>
+
+                <div class="notes-input">
+                    <input type="text" id="noteTitle" placeholder="Note title...">
+                    <textarea id="noteContent" placeholder="Your thoughts and ideas..."></textarea>
+                    <button class="btn success" onclick="addNote()">Save Note</button>
+                </div>
+                
+                <div class="notes-list" id="notesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let todos = [];
+        let notes = [];
+
+        // Theme management
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('preferred-theme', theme);
+            
+            // Update theme toggle buttons
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('preferred-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Update active theme button
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase() === savedTheme) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            checkAuthStatus();
+        });
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    showMainApp();
+                    loadUserData();
+                } else {
+                    showAuthOverlay();
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                showAuthOverlay();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            clearMessages();
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            clearMessages();
+        }
+
+        function showAuthOverlay() {
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.username;
+                document.getElementById('userEmail').textContent = currentUser.email;
+            }
+        }
+
+        function clearMessages() {
+            document.getElementById('authMessage').innerHTML = '';
+            document.getElementById('registerMessage').innerHTML = '';
+        }
+
+        function showMessage(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="message ${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data.user;
+                    showMainApp();
+                    loadUserData();
+                } else {
+                    showMessage('authMessage', data.error, true);
+                }
+            } catch (error) {
+                showMessage('authMessage', 'Connection error. Please try again.', true);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const registerBtn = document.getElementById('registerBtn');
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Creating account...';
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data.user;
+                    showMainApp();
+                    loadUserData();
+                } else {
+                    showMessage('registerMessage', data.error, true);
+                }
+            } catch (error) {
+                showMessage('registerMessage', 'Connection error. Please try again.', true);
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Sign Up';
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    currentUser = null;
+                    todos = [];
+                    notes = [];
+                    showAuthOverlay();
+                    document.getElementById('todoList').innerHTML = '';
+                    document.getElementById('notesList').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        async function loadUserData() {
+            await Promise.all([loadTodos(), loadNotes()]);
+            updateStats();
+        }
+
+        function updateStats() {
+            const totalTodos = todos.length;
+            const completedTodos = todos.filter(t => t.completed).length;
+            const now = new Date();
+            const overdueTodos = todos.filter(t => !t.completed && t.deadline && new Date(t.deadline) < now).length;
+            
+            document.getElementById('totalTodos').textContent = totalTodos;
+            document.getElementById('completedTodos').textContent = completedTodos;
+            document.getElementById('overdueTodos').textContent = overdueTodos;
+            
+            const totalNotes = notes.length;
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayNotes = notes.filter(n => new Date(n.created_at) >= todayStart).length;
+            
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - 7);
+            const recentNotes = notes.filter(n => new Date(n.created_at) >= weekStart).length;
+            
+            document.getElementById('totalNotes').textContent = totalNotes;
+            document.getElementById('todayNotes').textContent = todayNotes;
+            document.getElementById('recentNotes').textContent = recentNotes;
+        }
+
+        // Todo Functions
+        async function loadTodos() {
+            try {
+                const response = await fetch('/api/todos', { credentials: 'include' });
+                if (response.ok) {
+                    todos = await response.json();
+                    renderTodos();
+                }
+            } catch (error) {
+                console.error('Error loading todos:', error);
+            }
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('todoInput');
+            const deadlineInput = document.getElementById('deadlineInput');
+            const priorityInput = document.getElementById('priorityInput');
+            
+            const text = input.value.trim();
+            if (text === '') return;
+
+            const todoData = {
+                text,
+                deadline: deadlineInput.value || null,
+                priority: priorityInput.value
+            };
+
+            try {
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(todoData)
+                });
+
+                if (response.ok) {
+                    input.value = '';
+                    deadlineInput.value = '';
+                    priorityInput.value = 'medium';
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
+        }
+
+        async function toggleTodo(id, completed) {
+            try {
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ completed: !completed })
+                });
+
+                if (response.ok) {
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error toggling todo:', error);
+            }
+        }
+
+        async function deleteTodo(id) {
+            if (!confirm('Delete this task permanently?')) return;
+            
+            try {
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error deleting todo:', error);
+            }
+        }
+
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+            
+            const sortedTodos = [...todos].sort((a, b) => {
+                if (a.completed !== b.completed) {
+                    return a.completed - b.completed;
+                }
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                return priorityOrder[b.priority] - priorityOrder[a.priority];
+            });
+
+            sortedTodos.forEach((todo) => {
+                const li = document.createElement('li');
+                li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                
+                const now = new Date();
+                const deadline = todo.deadline ? new Date(todo.deadline) : null;
+                let deadlineClass = '';
+                let deadlineText = '';
+                
+                if (deadline && !todo.completed) {
+                    const hoursDiff = (deadline - now) / (1000 * 60 * 60);
+                    if (hoursDiff < 0) {
+                        deadlineClass = 'deadline-overdue';
+                        deadlineText = `Overdue (${formatDateTime(deadline)})`;
+                        li.classList.add('overdue');
+                    } else if (hoursDiff < 24) {
+                        deadlineClass = 'deadline-soon';
+                        deadlineText = `Due ${formatDateTime(deadline)}`;
+                        li.classList.add('due-soon');
+                    } else {
+                        deadlineClass = 'deadline-normal';
+                        deadlineText = `Due ${formatDateTime(deadline)}`;
+                    }
+                } else if (deadline && todo.completed) {
+                    deadlineText = `Was due ${formatDateTime(deadline)}`;
+                    deadlineClass = 'deadline-normal';
+                }
+                
+                li.innerHTML = `
+                    <div class="checkbox ${todo.completed ? 'checked' : ''}" onclick="toggleTodo(${todo.id}, ${todo.completed})"></div>
+                    <div class="todo-content">
+                        <div class="todo-text">${todo.text}</div>
+                        <div class="todo-meta">
+                            <span class="priority-badge priority-${todo.priority}">${getPriorityText(todo.priority)}</span>
+                            ${deadlineText ? `<span class="deadline-badge ${deadlineClass}">${deadlineText}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                `;
+                
+                todoList.appendChild(li);
+            });
+            
+            updateStats();
+        }
+
+        function getPriorityText(priority) {
+            const map = { high: 'High', medium: 'Medium', low: 'Low' };
+            return map[priority] || 'Medium';
+        }
+
+        function formatDateTime(dateTime) {
+            const date = new Date(dateTime);
+            const now = new Date();
+            const diffDays = Math.floor((date - now) / (1000 * 60 * 60 * 24));
+            
+            const timeStr = date.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            if (diffDays === 0) {
+                return `today at ${timeStr}`;
+            } else if (diffDays === 1) {
+                return `tomorrow at ${timeStr}`;
+            } else if (diffDays === -1) {
+                return `yesterday at ${timeStr}`;
+            } else if (diffDays > 1 && diffDays < 7) {
+                return `${date.toLocaleDateString('en-US', { weekday: 'long' })} at ${timeStr}`;
+            } else {
+                return `${date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                })} at ${timeStr}`;
+            }
+        }
+
+        // Notes Functions
+        async function loadNotes() {
+            try {
+                const response = await fetch('/api/notes', { credentials: 'include' });
+                if (response.ok) {
+                    notes = await response.json();
+                    renderNotes();
+                }
+            } catch (error) {
+                console.error('Error loading notes:', error);
+            }
+        }
+
+        async function addNote() {
+            const titleInput = document.getElementById('noteTitle');
+            const contentInput = document.getElementById('noteContent');
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            
+            if (title === '' || content === '') return;
+
+            try {
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ title, content })
+                });
+
+                if (response.ok) {
+                    titleInput.value = '';
+                    contentInput.value = '';
+                    loadNotes();
+                }
+            } catch (error) {
+                console.error('Error adding note:', error);
+            }
+        }
+
+        async function deleteNote(id) {
+            if (!confirm('Delete this note permanently?')) return;
+            
+            try {
+                const response = await fetch(`/api/notes/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    loadNotes();
+                }
+            } catch (error) {
+                console.error('Error deleting note:', error);
+            }
+        }
+
+        function renderNotes() {
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = '';
+
+            notes.forEach((note) => {
+                const div = document.createElement('div');
+                div.className = 'note-item';
+                
+                const date = new Date(note.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                
+                div.innerHTML = `
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-content">${note.content}</div>
+                    <div class="note-date">${date}</div>
+                    <button class="delete-note" onclick="deleteNote(${note.id})">x</button>
+                `;
+                
+                notesList.appendChild(div);
+            });
+            
+            updateStats();
+        }
+
+        // Event listeners
+        document.getElementById('todoInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTodo();
+        });
+
+        document.getElementById('noteContent').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) addNote();
+        });
+    </script>
+</body>
+</html>

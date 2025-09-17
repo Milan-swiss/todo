@@ -1,11 +1,13 @@
--- Create tables for Todo & Notes app
+-- Create tables for Todo & Notes app with authentication
 
--- Users table (optional, for future multi-user support)
+-- Users table with password authentication
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP WITH TIME ZONE
 );
 
 -- Todos table
@@ -14,6 +16,8 @@ CREATE TABLE IF NOT EXISTS todos (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     text TEXT NOT NULL,
     completed BOOLEAN DEFAULT FALSE,
+    deadline TIMESTAMP WITH TIME ZONE,
+    priority VARCHAR(10) DEFAULT 'medium',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -32,11 +36,8 @@ CREATE TABLE IF NOT EXISTS notes (
 CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);
 CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_todos_completed ON todos(completed);
-
--- Insert a default user for testing
-INSERT INTO users (username, email) 
-VALUES ('default_user', 'test@example.com') 
-ON CONFLICT (username) DO NOTHING;
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
